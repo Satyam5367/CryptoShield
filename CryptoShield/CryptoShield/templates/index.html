@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CryptoShield — Secure File Sharing</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#c9d1d9; min-height:100vh; }
+
+    nav {
+      background:#161b22; border-bottom:1px solid #30363d;
+      padding:0 2rem; display:flex; align-items:center;
+      justify-content:space-between; height:60px;
+    }
+    .nav-brand { color:#58a6ff; font-size:1.2rem; font-weight:700; letter-spacing:1px; }
+    .nav-brand span { color:#3fb950; }
+    .nav-links a { color:#8b949e; text-decoration:none; margin-left:1.5rem; font-size:0.9rem; transition:color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color:#58a6ff; }
+    .nav-user { display:flex; align-items:center; gap:0.75rem; }
+    .nav-user span { font-size:0.85rem; color:#8b949e; }
+    .btn-sm {
+      background:transparent; border:1px solid #30363d; color:#8b949e;
+      padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.2s;
+    }
+    .btn-sm:hover { border-color:#f85149; color:#f85149; }
+
+    main { max-width:1100px; margin:0 auto; padding:2rem; }
+    h1 { font-size:1.4rem; color:#e6edf3; margin-bottom:0.25rem; }
+    .subtitle { color:#8b949e; font-size:0.9rem; margin-bottom:2rem; }
+
+    .tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid #30363d; padding-bottom:0; }
+    .tab {
+      background:none; border:none; color:#8b949e; padding:0.6rem 1.25rem;
+      cursor:pointer; font-size:0.9rem; border-bottom:2px solid transparent;
+      transition:all 0.2s; margin-bottom:-1px;
+    }
+    .tab.active { color:#58a6ff; border-bottom-color:#58a6ff; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    .panel { background:#161b22; border:1px solid #30363d; border-radius:10px; overflow:hidden; margin-bottom:1.5rem; }
+    .panel-header { padding:1rem 1.25rem; border-bottom:1px solid #30363d; }
+    .panel-header h2 { font-size:0.95rem; color:#e6edf3; }
+    .panel-body { padding:1.25rem; }
+
+    .form-group { margin-bottom:1rem; }
+    .form-group label { font-size:0.8rem; color:#8b949e; display:block; margin-bottom:0.3rem; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; background:#0d1117; border:1px solid #30363d;
+      color:#c9d1d9; padding:8px 12px; border-radius:6px;
+      font-size:0.85rem; outline:none; transition:border-color 0.2s;
+      font-family:inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:#58a6ff; }
+    .form-group textarea { resize:vertical; min-height:80px; font-family:monospace; font-size:0.78rem; }
+
+    .btn-primary {
+      background:#1f6feb; color:#fff; border:none; padding:9px 18px;
+      border-radius:6px; cursor:pointer; font-size:0.9rem; font-weight:600;
+      transition:background 0.2s;
+    }
+    .btn-primary:hover { background:#388bfd; }
+    .btn-primary:disabled { background:#30363d; cursor:not-allowed; }
+    .btn-green {
+      background:#1a3a1a; color:#3fb950; border:1px solid #2a5a2a;
+      padding:9px 18px; border-radius:6px; cursor:pointer; font-size:0.9rem;
+      font-weight:600; transition:all 0.2s;
+    }
+    .btn-green:hover { background:#2a5a2a; }
+
+    .status-msg { font-size:0.82rem; margin-top:0.5rem; min-height:20px; padding:0.4rem 0; }
+    .status-msg.success { color:#3fb950; }
+    .status-msg.error   { color:#f85149; }
+    .status-msg.info    { color:#58a6ff; }
+
+    /* File list */
+    .file-list { display:flex; flex-direction:column; gap:0.5rem; }
+    .file-item {
+      background:#0d1117; border:1px solid #21262d; border-radius:8px;
+      padding:0.85rem 1rem; display:flex; justify-content:space-between;
+      align-items:center; transition:border-color 0.2s;
+    }
+    .file-item:hover { border-color:#30363d; }
+    .file-info h3 { font-size:0.9rem; color:#e6edf3; margin-bottom:0.2rem; }
+    .file-info p  { font-size:0.75rem; color:#8b949e; }
+    .file-actions { display:flex; gap:0.5rem; }
+    .btn-action {
+      background:transparent; border:1px solid #30363d; color:#58a6ff;
+      padding:4px 12px; border-radius:4px; cursor:pointer; font-size:0.78rem;
+      transition:all 0.2s;
+    }
+    .btn-action:hover { border-color:#58a6ff; background:#1f2937; }
+    .btn-action.verify { color:#3fb950; }
+    .btn-action.verify:hover { border-color:#3fb950; }
+
+    .badge {
+      display:inline-block; padding:2px 8px; border-radius:12px;
+      font-size:0.68rem; font-weight:600; text-transform:uppercase;
+    }
+    .badge.downloaded { background:#1a3a1a; color:#3fb950; }
+    .badge.pending    { background:#2a2a1a; color:#e3b341; }
+
+    /* Crypto flow diagram */
+    .flow-diagram {
+      background:#0d1117; border:1px solid #21262d; border-radius:8px;
+      padding:1.25rem; font-family:monospace; font-size:0.78rem;
+      color:#8b949e; line-height:2;
+    }
+    .flow-diagram .highlight { color:#58a6ff; }
+    .flow-diagram .green     { color:#3fb950; }
+    .flow-diagram .yellow    { color:#e3b341; }
+
+    /* Decrypt output */
+    .decrypt-output {
+      background:#0d1117; border:1px solid #21262d; border-radius:6px;
+      padding:1rem; font-family:monospace; font-size:0.8rem;
+      color:#3fb950; word-break:break-all; min-height:60px; max-height:200px;
+      overflow-y:auto; margin-top:0.75rem; display:none;
+    }
+
+    /* Login */
+    #login-page {
+      display:flex; align-items:center; justify-content:center; min-height:100vh;
+    }
+    .login-box {
+      background:#161b22; border:1px solid #30363d; border-radius:12px;
+      padding:2rem; width:360px;
+    }
+    .login-box h1 { color:#3fb950; font-size:1.3rem; margin-bottom:0.25rem; }
+    .login-box p  { color:#8b949e; font-size:0.85rem; margin-bottom:1.5rem; }
+    .login-box .form-group { margin-bottom:1rem; }
+    .btn-login {
+      width:100%; background:#1a3a1a; color:#3fb950; border:1px solid #2a5a2a;
+      padding:10px; border-radius:6px; cursor:pointer;
+      font-size:0.95rem; font-weight:600; transition:all 0.2s; margin-top:0.5rem;
+    }
+    .btn-login:hover { background:#2a5a2a; }
+    #login-error { color:#f85149; font-size:0.82rem; margin-top:0.5rem; text-align:center; min-height:20px; }
+
+    #app-page { display:none; }
+
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    @media(max-width:768px) { .grid2 { grid-template-columns:1fr; } }
+
+    .user-pill {
+      display:inline-block; background:#1f2937; border:1px solid #30363d;
+      border-radius:20px; padding:2px 10px; font-size:0.78rem; color:#58a6ff;
+      margin:2px; cursor:pointer; transition:all 0.2s;
+    }
+    .user-pill:hover { border-color:#58a6ff; }
+    .user-pill.selected { background:#1f6feb; border-color:#388bfd; color:#fff; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-box">
+    <h1>🔐 CryptoShield</h1>
+    <p>End-to-end encrypted file sharing</p>
+    <div class="form-group"><label>Username</label><input type="text" id="l-user" placeholder="alice"/></div>
+    <div class="form-group"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"/></div>
+    <button class="btn-login" onclick="doLogin()">Sign In</button>
+    <div id="login-error"></div>
+    <p style="text-align:center;margin-top:1rem;font-size:0.78rem;color:#8b949e;">
+      No account? <span style="color:#58a6ff;cursor:pointer" onclick="showReg()">Register</span>
+    </p>
+    <div id="reg-form" style="display:none;margin-top:1rem">
+      <div class="form-group"><label>Email</label><input type="email" id="l-email" placeholder="alice@example.com"/></div>
+      <button class="btn-primary" style="width:100%" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-page">
+  <nav>
+    <div class="nav-brand">Crypto<span>Shield</span></div>
+    <div class="nav-links">
+      <a href="#" class="active" onclick="switchTab('send',this)">Send File</a>
+      <a href="#" onclick="switchTab('inbox',this)">Inbox</a>
+      <a href="#" onclick="switchTab('keys',this)">My Keys</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-user"></span>
+      <button class="btn-sm" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Secure File Sharing</h1>
+    <p class="subtitle">AES-256-GCM encryption · RSA-2048 key exchange · Digital signatures</p>
+
+    <!-- SEND -->
+    <div id="tab-send" class="tab-content active">
+      <div class="grid2">
+        <div>
+          <div class="panel">
+            <div class="panel-header"><h2>📤 Encrypt & Send File</h2></div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>Select Recipient</label>
+                <div id="recipient-list" style="display:flex;flex-wrap:wrap;gap:4px;min-height:32px">
+                  <span style="color:#8b949e;font-size:0.8rem">Loading users...</span>
+                </div>
+                <input type="hidden" id="selected-recipient"/>
+              </div>
+              <div class="form-group">
+                <label>Your Private Key (PEM) — stays in browser, never sent to server</label>
+                <textarea id="sender-priv-key" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+              </div>
+              <div class="form-group">
+                <label>File to Encrypt</label>
+                <input type="file" id="upload-file"/>
+              </div>
+              <button class="btn-primary" onclick="encryptAndSend()">🔒 Encrypt & Send</button>
+              <div class="status-msg" id="send-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <div class="panel-header"><h2>🔐 How It Works</h2></div>
+            <div class="panel-body">
+              <div class="flow-diagram">
+<span class="highlight">1. AES-256-GCM</span> key generated (ephemeral)<br/>
+   ↓<br/>
+<span class="highlight">2. File</span> encrypted with AES key<br/>
+   ↓<br/>
+<span class="green">3. Ciphertext signed</span> with your RSA<br/>
+   private key (RSA-PSS / SHA-256)<br/>
+   ↓<br/>
+<span class="yellow">4. AES key wrapped</span> with recipient's<br/>
+   RSA-2048 public key (OAEP)<br/>
+   ↓<br/>
+<span class="highlight">5. Bundle</span> uploaded to server<br/><br/>
+<span style="color:#8b949e">Only recipient can unwrap the AES key.</span><br/>
+<span style="color:#8b949e">Signature proves it came from you.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:1.5rem">
+            <div class="panel-header"><h2>🔑 Decrypt File</h2></div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>File ID to Decrypt</label>
+                <input type="number" id="decrypt-file-id" placeholder="1"/>
+              </div>
+              <div class="form-group">
+                <label>Your Private Key (PEM)</label>
+                <textarea id="decrypt-priv-key" placeholder="-----BEGIN PRIVATE KEY-----&#10;..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Sender's Public Key (PEM) — for signature verification</label>
+                <textarea id="decrypt-sender-pub" placeholder="-----BEGIN PUBLIC KEY-----&#10;..."></textarea>
+              </div>
+              <button class="btn-green" onclick="decryptFile()">🔓 Decrypt & Verify</button>
+              <div class="status-msg" id="decrypt-status"></div>
+              <div class="decrypt-output" id="decrypt-output"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INBOX -->
+    <div id="tab-inbox" class="tab-content">
+      <div class="panel">
+        <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+          <h2>📥 Inbox — Files Received</h2>
+          <button class="btn-sm" onclick="loadInbox()" style="color:#58a6ff;border-color:#58a6ff">Refresh</button>
+        </div>
+        <div class="panel-body">
+          <div class="file-list" id="inbox-list">
+            <p style="color:#8b949e">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEYS -->
+    <div id="tab-keys" class="tab-content">
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-header"><h2>📤 Upload Your Public Key</h2></div>
+          <div class="panel-body">
+            <p style="font-size:0.82rem;color:#8b949e;margin-bottom:1rem">
+              Generate a key pair locally with <code style="color:#58a6ff">python keygen.py --name you</code>,
+              then paste your public key here. Your private key never leaves your machine.
+            </p>
+            <div class="form-group">
+              <label>Public Key PEM</label>
+              <textarea id="pub-key-input" placeholder="-----BEGIN PUBLIC KEY-----&#10;...&#10;-----END PUBLIC KEY-----" style="min-height:140px"></textarea>
+            </div>
+            <button class="btn-primary" onclick="uploadPublicKey()">Upload Public Key</button>
+            <div class="status-msg" id="key-status"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>👥 Users with Public Keys</h2></div>
+          <div class="panel-body">
+            <div id="keys-user-list" style="display:flex;flex-direction:column;gap:0.5rem">
+              <p style="color:#8b949e;font-size:0.85rem">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API = 'http://localhost:5001';
+  let token = localStorage.getItem('cs_token');
+  let me    = JSON.parse(localStorage.getItem('cs_me') || 'null');
+
+  if (token && me) showApp();
+
+  function showReg() {
+    document.getElementById('reg-form').style.display = 'block';
+  }
+
+  async function doRegister() {
+    const u = document.getElementById('l-user').value.trim();
+    const e = document.getElementById('l-email').value.trim();
+    const p = document.getElementById('l-pass').value;
+    const res = await fetch(`${API}/auth/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, email:e, password:p})
+    });
+    const data = await res.json();
+    document.getElementById('login-error').textContent =
+      res.ok ? '✓ Registered! Now sign in.' : (data.error || 'Error');
+    document.getElementById('login-error').style.color = res.ok ? '#3fb950' : '#f85149';
+  }
+
+  async function doLogin() {
+    const u = document.getElementById('l-user').value.trim();
+    const p = document.getElementById('l-pass').value;
+    document.getElementById('login-error').textContent = '';
+    try {
+      const res  = await fetch(`${API}/auth/login`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username:u, password:p})
+      });
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('login-error').textContent = data.error||'Failed'; return; }
+      token = data.access_token;
+      me    = data.user;
+      localStorage.setItem('cs_token', token);
+      localStorage.setItem('cs_me', JSON.stringify(me));
+      showApp();
+    } catch(e) { document.getElementById('login-error').textContent = 'Cannot connect to API.'; }
+  }
+
+  function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app-page').style.display   = 'block';
+    document.getElementById('nav-user').textContent = me?.username || '';
+    loadRecipients();
+    loadInbox();
+    loadKeyUsers();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('cs_token'); localStorage.removeItem('cs_me');
+    token = null; me = null;
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('app-page').style.display   = 'none';
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    el.classList.add('active');
+    if (name === 'inbox') loadInbox();
+    if (name === 'keys')  loadKeyUsers();
+  }
+
+  async function loadRecipients() {
+    const res  = await fetch(`${API}/keys/users`, {headers:{'Authorization':`Bearer ${token}`}});
+    const data = await res.json();
+    const el   = document.getElementById('recipient-list');
+    const others = data.filter(u => u.id !== me?.id);
+    el.innerHTML = others.length
+      ? others.map(u => `<span class="user-pill" onclick="selectRecipient(${u.id},'${u.username}',this)">${u.username}</span>`).join('')
+      : '<span style="color:#8b949e;font-size:0.8rem">No other users with public keys found.</span>';
+  }
+
+  function selectRecipient(id, name, el) {
+    document.querySelectorAll('.user-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selected-recipient').value = id;
+  }
+
+  async function encryptAndSend() {
+    const recipientId = document.getElementById('selected-recipient').value;
+    const privKey     = document.getElementById('sender-priv-key').value.trim();
+    const fileInput   = document.getElementById('upload-file');
+    const statusEl    = document.getElementById('send-status');
+
+    if (!recipientId) { statusEl.textContent='Select a recipient.'; statusEl.className='status-msg error'; return; }
+    if (!privKey)     { statusEl.textContent='Enter your private key.'; statusEl.className='status-msg error'; return; }
+    if (!fileInput.files[0]) { statusEl.textContent='Select a file.'; statusEl.className='status-msg error'; return; }
+
+    statusEl.textContent='Encrypting and uploading...'; statusEl.className='status-msg info';
+
+    const fd = new FormData();
+    fd.append('file', fileInput.files[0]);
+    fd.append('recipient_id', recipientId);
+    fd.append('sender_private_key_pem', privKey);
+
+    try {
+      const res  = await fetch(`${API}/files/encrypt-upload`, {
+        method:'POST', headers:{'Authorization':`Bearer ${token}`}, body:fd
+      });
+      const data = await res.json();
+      if (res.ok) {
+        statusEl.textContent=`✓ File encrypted and sent (ID: ${data.file_id})`;
+        statusEl.className='status-msg success';
+      } else {
+        statusEl.textContent = data.error||'Upload failed';
+        statusEl.className='status-msg error';
+      }
+    } catch(e) { statusEl.textContent='API error.'; statusEl.className='status-msg error'; }
+  }
+
+  async function decryptFile() {
+    const fileId    = document.getElementById('decrypt-file-id').value;
+    const privKey   = document.getElementById('decrypt-priv-key').value.trim();
+    const senderPub = document.getElementById('decrypt-sender-pub').value.trim();
+    const statusEl  = document.getElementById('decrypt-status');
+    const outEl     = document.getElementById('decrypt-output');
+
+    if (!fileId || !privKey || !senderPub) {
+      statusEl.textContent='All fields required.'; statusEl.className='status-msg error'; return;
+    }
+
+    statusEl.textContent='Decrypting and verifying signature...'; statusEl.className='status-msg info';
+
+    try {
+      const res  = await fetch(`${API}/files/decrypt/${fileId}`, {
+        method:'POST',
+        headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+        body: JSON.stringify({recipient_private_key_pem:privKey, sender_public_key_pem:senderPub})
+      });
+      const data = await res.json();
+      if (res.ok) {
+        statusEl.textContent=`✓ ${data.message}`;
+        statusEl.className='status-msg success';
+        const text = atob(data.plaintext);
+        outEl.textContent = text;
+        outEl.style.display='block';
+      } else {
+        statusEl.textContent=data.error||'Decryption failed';
+        statusEl.className='status-msg error';
+        outEl.style.display='none';
+      }
+    } catch(e) { statusEl.textContent='API error.'; statusEl.className='status-msg error'; }
+  }
+
+  async function loadInbox() {
+    const res  = await fetch(`${API}/files/inbox`, {headers:{'Authorization':`Bearer ${token}`}});
+    const data = await res.json();
+    const el   = document.getElementById('inbox-list');
+    el.innerHTML = data.length
+      ? data.map(f => `
+        <div class="file-item">
+          <div class="file-info">
+            <h3>📄 ${f.filename}</h3>
+            <p>From user #${f.sender_id} · ${(f.file_size/1024).toFixed(1)} KB · ${new Date(f.uploaded_at).toLocaleString()} &nbsp;
+               <span class="badge ${f.downloaded?'downloaded':'pending'}">${f.downloaded?'Downloaded':'New'}</span>
+            </p>
+          </div>
+          <div class="file-actions">
+            <button class="btn-action" onclick="document.getElementById('decrypt-file-id').value=${f.id};switchTab('send',document.querySelector('.nav-links a'))">Decrypt</button>
+            <button class="btn-action verify" onclick="verifyOnly(${f.id})">Verify</button>
+          </div>
+        </div>`).join('')
+      : '<p style="color:#8b949e;text-align:center;padding:1rem">No files in inbox.</p>';
+  }
+
+  async function verifyOnly(fileId) {
+    const senderPub = prompt('Paste sender\'s public key PEM for verification:');
+    if (!senderPub) return;
+    const res  = await fetch(`${API}/files/verify/${fileId}`, {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body: JSON.stringify({sender_public_key_pem: senderPub})
+    });
+    const data = await res.json();
+    alert(data.message || (data.error||'Error'));
+  }
+
+  async function uploadPublicKey() {
+    const pem    = document.getElementById('pub-key-input').value.trim();
+    const statusEl = document.getElementById('key-status');
+    if (!pem) { statusEl.textContent='Paste your public key PEM.'; statusEl.className='status-msg error'; return; }
+    const res  = await fetch(`${API}/keys/upload`, {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+      body: JSON.stringify({public_key_pem: pem})
+    });
+    const data = await res.json();
+    statusEl.textContent  = res.ok ? '✓ Public key uploaded successfully' : (data.error||'Failed');
+    statusEl.className = `status-msg ${res.ok?'success':'error'}`;
+    if (res.ok) { loadRecipients(); loadKeyUsers(); }
+  }
+
+  async function loadKeyUsers() {
+    const res  = await fetch(`${API}/keys/users`, {headers:{'Authorization':`Bearer ${token}`}});
+    const data = await res.json();
+    const el   = document.getElementById('keys-user-list');
+    el.innerHTML = data.length
+      ? data.map(u => `
+        <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:0.65rem 0.85rem;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="color:#e6edf3;font-size:0.88rem">${u.username}</span>
+            <span style="color:#8b949e;font-size:0.75rem;margin-left:0.5rem">#${u.id}</span>
+          </div>
+          <span style="color:#3fb950;font-size:0.75rem">🔑 Key uploaded</span>
+        </div>`).join('')
+      : '<p style="color:#8b949e;font-size:0.85rem">No users have uploaded public keys yet.</p>';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key==='Enter' && document.getElementById('login-page').style.display!=='none') doLogin();
+  });
+</script>
+</body>
+</html>

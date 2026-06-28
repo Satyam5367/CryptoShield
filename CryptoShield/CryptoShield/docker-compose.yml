@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  cryptoshield:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DATABASE_URL=sqlite:///cryptoshield.db
+    volumes:
+      - ./keys:/app/keys
+    restart: unless-stopped

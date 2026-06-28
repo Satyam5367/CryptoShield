@@ -1,0 +1,15 @@
+[bandit]
+# Bandit SAST configuration for CryptoShield
+# Run: bandit -r app/ -c bandit.yaml -f txt -o bandit_report.txt
+
+skips = []
+tests = []
+
+# Severity levels to report: LOW, MEDIUM, HIGH
+severity = LOW
+
+# Confidence levels to report: LOW, MEDIUM, HIGH
+confidence = LOW
+
+# Exclude test files and key directory from SAST scan
+exclude_dirs = ['tests', 'venv', '.venv', 'keys']
